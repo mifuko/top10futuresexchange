@@ -6,73 +6,45 @@ import csv
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-# 阶段排名
 
+# 阶段排名
 dceurl = "http://www.dce.com.cn/publicweb/quotesdata/memberDealCh.html"
 dcepage = urllib.request.urlopen(dceurl)
-soupdce = BeautifulSoup(dcepage)
+soupdce = BeautifulSoup(dcepage, 'html.parser')
 
-#print(soupdce)
-
+# 找到包含数据的表格
 table = soupdce.find('table')
-results = table.find_all('tr')
+if table:
+    # 尝试找到<thead>和<tbody>标签
+    headers = table.find_all('thead')[0] if table.find('thead') else table.find_all('tr')[0]
+    header = [th.get_text(strip=True) for th in headers.find_all('th')]
 
-#print('number of res', len(results))
-#print(results)
+    # 初始化存储数据的列表
+    rows = [header]  # 将表头添加到rows列表中
 
-rows = []
-rows.append(['名次','会员号','会员名称','成交量','成交量比重','名次','会员号','会员名称','成交额','成交额比重'])
-#print(rows)
+    # 计数器，用于跟踪当前行号
+    counter = 0
+    # 遍历<tbody>中的所有<tr>标签，但只取前12行
+    tbody = table.find('tbody') if table.find('tbody') else table
+    for tr in tbody.find_all('tr')[:12]:  # 从所有<tr>标签中取前12行
+        tddata = tr.find_all('td')
+        if tddata:
+            row_data = [td.get_text(strip=True) for td in tddata]
+            rows.append(row_data)
+            counter += 1
+        if counter >= 11:  # 达到12行后停止遍历
+            break
+else:
+    print("警告：未找到<table>标签。")
 
-for result in results:
-    tddata = result.find_all('td')
-    #print(tddata)
+# 将数据转换为pandas DataFrame
+df = pd.DataFrame(rows[1:], columns=header) if header else None  # 确保header不为空
 
-    if len(tddata) == 0:
-        continue
-
-    rank1 = tddata[0].getText()
-    participateid1 = tddata[1].getText()
-    participatename1 = tddata[2].getText()
-    boardlot = tddata[3].getText()
-    boardrate = tddata[4].getText()
-    rank2 = tddata[5].getText()
-    participateid2 = tddata[6].getText()
-    participatename2 = tddata[7].getText()
-    volume = tddata[8].getText()
-    volumerate = tddata[9].getText()
-
-    rows.append([rank1, participateid1, participatename1, boardlot, boardrate,rank2, participateid2, participatename2, volume, volumerate])
-
-print(rows)
-
-with open('dd.csv', 'w', newline='', encoding="utf-8") as f_output:
-    csv_output = csv.writer(f_output)
-    csv_output.writerows(rows)
-
-
-# 读取 CSV 文件
-df = pd.read_csv('dd.csv', usecols=[2, 3, 4], header=1)
-df = df.replace(r'\s', '', regex=True)
-
+# 打印DataFrame
 print(df)
 
-# 去除逗号分隔符，并将第二列数据转换为数字类型
-#df[df.columns[1]] = df[df.columns[1]].str.replace(',', '')
-#df[df.columns[1]] = pd.to_numeric(df[df.columns[1]])
-# 去除逗号和所有非数字字符，保留小数点
-df[df.columns[1]] = df[df.columns[1]].str.replace(r'[^\d.]', '')
-# 尝试将字符串转换为数字，无法转换的值将被设置为NaN
-df[df.columns[1]] = pd.to_numeric(df[df.columns[1]], errors='coerce')
 
-
-#print(df)
-
-top_10 = df.head(10)
-
-print(top_10)
-
-# 绘制条形图并指定刻度格式和标签字体
+""" 绘制条形图并指定刻度格式和标签字体
 ax = top_10.plot(kind='bar', x='会员简称', y='成交量（手）')
 ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:.1f}万'.format(x / 10000)))
 ax.set_xticklabels(top_10['会员简称'])
@@ -81,3 +53,4 @@ ax.get_yaxis().set_label_coords(-0.1, 0.9)
 
 # 显示图形
 plt.show()
+"""
