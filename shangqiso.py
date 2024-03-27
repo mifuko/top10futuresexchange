@@ -24,7 +24,7 @@ time.sleep(2)
 driver.find_element_by_id("dateinput").clear()
 time.sleep(2)
 
-wdate = "2024-03-25"
+wdate = "2024-03-26"
 
 driver.maximize_window()
 driver.find_element_by_id("dateinput").clear()
