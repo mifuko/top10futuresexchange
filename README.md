@@ -52,6 +52,43 @@ time.sleep(10)
 driver.quit()
 ```
 
+存一版pyppeteer的
+```
+import asyncio
+from pyppeteer import launch
+
+async def main():
+    # 启动浏览器
+    browser = await launch({
+        'headless': False,  # 设置为 True 启用无头模式
+        'args': ['--disable-infobars']
+    })
+    page = await browser.newPage()
+
+    # 设置用户代理字符串
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36')
+
+    # 访问目标网页
+    url = "http://www.czce.com.cn/cn/jysj/cjpm/H770305index_1.htm"
+    await page.goto(url, {'waitUntil': 'networkidle0'})
+
+    # 等待页面加载完成
+    await page.waitForXPath('//table')
+
+    # 找到"导出 EXCEL"链接并点击
+    link = await page.waitForXPath("//a[contains(@onclick, 'FutureDataTradeamt')]")
+    await link.click()
+
+    # 等待文件下载完成(根据实际情况调整等待时间)
+    await asyncio.sleep(10)
+
+    # 关闭浏览器
+    await browser.close()
+
+# 启动事件循环
+asyncio.get_event_loop().run_until_complete(main())
+```
+
 - 上期所的`shangqiso.py`当天只能爬取前一天的，修改日期好像失效了，估计页面也有改动，但至少还能用
 
 - 中金所的`ssszhijiexiazai.py`根据不同合约构建url还正常，得到`merged.csv`正常，但是计算top10的部分有问题，因为经纪商名字改了，在后面加了（经纪），需要修改这个字典
