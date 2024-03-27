@@ -153,3 +153,60 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 
 ```
+
+淦找ip也不行，这个版本在不开代理的情况下，时灵时不灵的
+
+```
+import asyncio
+import random
+from pyppeteer import launch
+from fake_useragent import UserAgent
+
+async def read_table_content(page):
+    # 确保页面加载完成
+    await page.waitForSelector('#hdtab1 table', {'timeout': 30000})  # 增加等待时间至30秒
+
+    # 使用JavaScript获取表格内容
+    table_content = await page.evaluate('''() => {
+        const table = document.querySelector('#hdtab1 table');
+        let rows = [];
+        for (let i = 1; i < table.rows.length; i++) { // 跳过表头
+            let row = [];
+            for (let j = 0; j < table.rows[i].cells.length; j++) {
+                row.push(table.rows[i].cells[j].innerText.trim());
+            }
+            rows.push(row);
+        }
+        return rows;
+    }''')
+
+    return table_content
+
+async def main():
+    ua = UserAgent()
+    browser = await launch({
+        'headless': False,  # 设置为 True 启用无头模式
+        'args': [
+            '--disable-blink-features=AutomationControlled',  # 禁用 WebDriver 标志
+            '--disable-infobars',
+            f'--user-agent={ua.random}',  # 设置随机用户代理
+        ]
+    })
+    page = await browser.newPage()
+
+    # 设置窗口大小
+    await page.setViewport({"width": random.randint(1024, 1920), "height": random.randint(768, 1080)})
+
+    # 设置Cookie
+    cookie = {"name": "UM_distinctid", "value": "18e7f0c1f2627-04b2b8c6824753-6755742d-144000-18e7f0c1f28a0c", "domain": ".czce.com.cn"}
+    await page.setCookie(cookie)
+
+    # 访问目标网页
+    url = "http://www.czce.com.cn/cn/jysj/cjpm/H770305index_1.htm"
+    await page.goto(url, {'waitUntil': 'networkidle2'})
+
+
+# 启动事件循环
+asyncio.get_event_loop().run_until_complete(main())
+
+```
