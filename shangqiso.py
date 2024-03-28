@@ -12,7 +12,7 @@ shfeurl = "https://www.shfe.com.cn/statements/dataview.html?paramid=pm"
 
 options = webdriver.ChromeOptions()
 #driver_path ="D:\chromedriver_win32 (1)\chromedriver.exe"
-driver_path ="D:\chromedriver_win32\chromedriver.exe"
+driver_path ="D:\chromedriver-win32\chromedriver.exe"
 
 driver = webdriver.Chrome(driver_path, options=options)
 driver.get(shfeurl)
@@ -24,7 +24,7 @@ time.sleep(2)
 driver.find_element_by_id("dateinput").clear()
 time.sleep(2)
 
-wdate = "2024-03-26"
+wdate = "2024-03-27"
 
 driver.maximize_window()
 driver.find_element_by_id("dateinput").clear()

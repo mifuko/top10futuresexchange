@@ -8,7 +8,7 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 
 pickdatey = '2024'
 pickdatem = '03'
-pickdated = '26'
+pickdated = '27'
 
 instruments = ['IF', 'IC', 'IM', 'IH', 'TS', 'TF', 'T', 'TL', 'IO', 'MO', 'HO']
 for ins in instruments:
@@ -50,8 +50,6 @@ df = pd.read_csv('D:/origin_download/merged.csv', usecols=[2, 9], header=1)
 # 建立新的 DataFrame，以 brokerlist 列表为基础
 new_df = pd.DataFrame({'brokerlist': brokerlist})
 
-print(df)
-
 # 遍历 brokerlist，并在 new_df 的 'brosum' 列中填入每个经纪商的成交量总和
 for i, bro in enumerate(brokerlist):
     broker = df.loc[df['会员简称'] == bro].copy()
@@ -67,7 +65,7 @@ new_df = new_df.sort_values(by='brosum', ascending=False)
 
 # 选取前 10 个经纪商
 new_df = new_df.head(10)
-#print(new_df)
+print(new_df)
 
 # 按照 brokerlist 绘制柱状图
 plt.bar(new_df['brokerlist'], new_df['brosum'], width=0.8)

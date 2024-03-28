@@ -1,82 +1,70 @@
-#coding:utf-8
+import asyncio
+import random
+from pyppeteer import launch
+from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
-import urllib.request
-import csv
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
+# 引入fake_useragent中的UserAgent类
+ua = UserAgent()
 
-plt.rcParams['font.sans-serif'] = ['SimHei']
+async def scroll_page(page):
+    # 滚动到页面底部
+    await page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
+    # 等待页面滚动完成
+    await asyncio.sleep(1)
 
-zceurl = "http://www.czce.com.cn/cn/DFSStaticFiles/Future/2024/20240326/FutureDataTradeamt.htm"
-zcepage = urllib.request.urlopen(zceurl)
-soupzce = BeautifulSoup(zcepage)
+async def wait_random_time():
+    # 随机等待一段时间，模拟真实用户操作
+    await asyncio.sleep(random.uniform(1, 3))
 
-#print(soupzce)
+async def main():
+    # 随机选择一个移动设备的User-Agent
+    mobile_user_agent = ua.random
 
-table = soupzce.find('table')
-results = table.find_all('tr')
+    browser = await launch({
+        'headless': False,
+        'args': [
+            '--disable-blink-features=AutomationControlled',
+            '--disable-infobars',
+            f'--user-agent={mobile_user_agent}',
+        ]
+    })
+    page = await browser.newPage()
 
-#print('number of res', len(results))
-#print(results)
+    # 设置窗口大小
+    await page.setViewport({"width": random.randint(1024, 1920), "height": random.randint(768, 1080)})
 
-rows = []
-rows.append(['名次','会员号','会员简称','成交量（手）','名次','会员号','会员简称','成交额（万元）'])
-#print(rows)
+    # 设置Cookie
+    cookie = {"name": "UM_distinctid", "value": "18e7f0c1f2627-04b2b8c6824753-6755742d-144000-18e7f0c1f28a0c", "domain": ".czce.com.cn"}
+    await page.setCookie(cookie)
 
-for result in results:
-    tddata = result.find_all('td')
-    #print(tddata)
+    # 访问目标网页
+    url = "http://www.czce.com.cn/cn/DFSStaticFiles/Future/2024/20240327/FutureDataTradeamt.htm"
+    await page.goto(url, {'waitUntil': 'networkidle2'})
 
-    if len(tddata) == 0:
-        continue
+    # 滚动页面并等待
+    await scroll_page(page)
+    await wait_random_time()
 
-    rank1 = tddata[0].getText()
-    participateid1 = tddata[1].getText()
-    participatename1 = tddata[2].getText()
-    boardlot = tddata[3].getText()
-    rank2 = tddata[4].getText()
-    participateid2 = tddata[5].getText()
-    participatename2 = tddata[6].getText()
-    volume = tddata[7].getText()
+    # 再次滚动页面并等待
+    await scroll_page(page)
+    await wait_random_time()
 
-    rows.append([rank1, participateid1, participatename1, boardlot, rank2, participateid2, participatename2, volume])
+    # 刷新网页
+    await page.reload({'waitUntil': 'networkidle2'})
 
+    # 读取网页源代码
+    page_source = await page.content()
+#    print(page_source)
+    with open('output.txt', 'w', encoding='utf-8') as file:
+        # 将page_source的内容写入文件
+        file.write(page_source)
+    # 刷新网页
+    await page.reload({'waitUntil': 'networkidle2'})
 
-#print(rows)
+    # 关闭浏览器
+#    await browser.close()
 
-with open('bbbs.csv', 'w', newline='', encoding='utf-8') as f_output:
-    csv_output = csv.writer(f_output)
-    csv_output.writerows(rows)
-
-# 创建 brokerlist 列表
-#brokerlist = ['中信期货', '东证期货', '海通期货', '国泰君安', '银河期货', '光大期货', '华泰期货', '华闻期货', '徽商期货',              '华西期货', '国信期货', '东吴期货', '中信建投', '广发期货', '渤海期货', '方正中期', '永安期货', '浙商期货','申银万国', '冠通期货']
-
-# 读取 CSV 文件，并选择第 2 和第 9 列
-
-# 读取 CSV 文件
-df = pd.read_csv('bbbs.csv', usecols=[2, 3], header=1)
-
-
-#print(df)
-
-# 去除逗号分隔符，并将第二列数据转换为数字类型
-df[df.columns[1]] = df[df.columns[1]].str.replace(',', '')
-df[df.columns[1]] = pd.to_numeric(df[df.columns[1]])
-
-#print(df)
-
-top_10 = df.head(10)
-
-print(top_10)
-
-# 绘制条形图并指定刻度格式和标签字体
-ax = top_10.plot(kind='bar', x='会员简称', y='成交量（手）')
-ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:.1f}万'.format(x / 10000)))
-ax.set_xticklabels(top_10['会员简称'])
-#ax.set_ylabel('成交量（万手）', fontweight='bold', rotation=90, labelpad=20)
-ax.get_yaxis().set_label_coords(-0.1, 0.9)
-
-# 显示图形
-plt.show()
+# 启动事件循环
+asyncio.get_event_loop().run_until_complete(main())
