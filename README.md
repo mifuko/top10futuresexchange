@@ -210,13 +210,20 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 
 ```
+
 ——————————————————————————————————————————————————————————
+
 20240328
 
+
 好消息，成功读到了网页源代码
+
 坏消息，源代码里面没有我需要的表格
+
 只能读到这个地址的内容，读不到单独表格url的网页源代码，单独表格url的网页源代码只能得到`<html><head></head><body></body></html>`
+
 还是要尝试java同步直接按按钮
+
 ```
 import asyncio
 import random
