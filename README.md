@@ -44,9 +44,55 @@ brokerlist = ['上海东证', '华泰期货', '南华期货', '中信建投', '�
   - 要关闭代理才能访问
 
 - 大商所【待修改】
+
+
   - 是某个天所在当月的，不是具体日期的
   - 某个交易日好像硬算也可以算
 
 - 中金所【待修改】
   - 运行前需要删除历史结果文件
   - 要关闭代理才能访问
+
+
+2024-03-29
+
+- 大商所读取当月的没有问题，但是读取前一个交易日就不行，需要先修改日期控件然后再去触发右边page(?或者是frame(?的更新。存一版`dsslastday.py`，只能读取source page，修改，但是不能提交，找不到他们交互的地方
+
+```
+import asyncio
+from pyppeteer import launch
+
+async def main():
+    # 启动浏览器
+    browser = await launch()
+    page = await browser.newPage()
+
+    # 增加超时时间到60秒
+    await page.goto("http://www.dce.com.cn/publicweb/quotesdata/memberDealPosiQuotes.html", {'waitUntil': 'networkidle2', 'timeout': 60000})
+    # 等待页面上的日期选择器加载完成
+    await page.waitForSelector('#control select:nth-of-type(1)')
+    await page.waitForSelector('#control select:nth-of-type(2)')
+
+    # 模拟用户选择年份和月份
+    await page.select('#control select:nth-of-type(1)', '2024')
+    await page.select('#control select:nth-of-type(2)', '02')
+
+    # 更改currDate输入框的值以模拟选择新的日期
+    new_date_value = '20240215'  # 新日期值，格式为YYYYMMDD
+    await page.evaluate(f"document.getElementById('currDate').value = '{new_date_value}';")
+
+    # 等待页面内容更新
+    await page.waitFor(1000);  # 等待1秒
+
+    # 获取并打印修改后的页面内容
+    new_page_content = await page.content()
+    print(new_page_content)
+
+    # 关闭浏览器
+    await browser.close()
+
+
+# 运行异步函数
+asyncio.get_event_loop().run_until_complete(main())
+
+```
