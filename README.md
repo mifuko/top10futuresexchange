@@ -96,3 +96,7 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 
 ```
+
+2024-04-10
+
+抓取先不变，增加heatmap
